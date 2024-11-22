@@ -23,8 +23,9 @@ class PerceptionController(BaseController):
             if pre_time is None:
                 self.set_parameters([rclpy.Parameter("active", value=False)])
             else:
-                if self.detected_time-pre_time>=6:
+                if self.detected_time-pre_time>=2:
                     self.set_parameters([rclpy.Parameter("active", value=False)])
+                    
             # self.set_parameters([rclpy.Parameter("active", value=False)])
 
                 

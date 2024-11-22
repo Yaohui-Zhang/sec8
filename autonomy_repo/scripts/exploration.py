@@ -17,41 +17,71 @@ class FrontierExploration(Node):
         self.goal_pub = self.create_publisher(TurtleBotState, '/cmd_nav', 10)
         self.nav_success_sub = self.create_subscription(Bool, "/nav_success",self.nav_callback, 10)
         self.state_sub = self.create_subscription(TurtleBotState, "/state", self.state_callback, 10)
+        # self.create_subscription(Bool, "/detector_bool", self.detected_callback, 10)
+        
         self.occupancy=None
         self.state=None
         #print(self.state)
 
+    # def detected_callback(self, msg: Bool):
+    #     if msg.data == True:
+    #         pre_time = self.detected_time
+    #         self.detected_time = self.get_clock().now().nanoseconds / 1e9
+    #         if pre_time is None:
+    #             self.set_parameters([rclpy.Parameter("active", value=False)])
+    #         else:
+    #             if self.detected_time-pre_time>=2:
+    #                 self.set_parameters([rclpy.Parameter("active", value=False)])
+    #         # self.set_parameters([rclpy.Parameter("active", value=False)])
+
+                
+    
+    # @property
+    # def active(self)->bool:
+    #     return self.get_parameter("active").value
+ 
+    # def compute_control(self) -> TurtleBotControl:
+    #     control_msg = TurtleBotControl()
+    #     if self.active:
+    #         control_msg.omega = 0.5
+    #     else:
+    #         twist = Twist()
+    #         twist.angular.z = 0.
+    #         self.cmd_vel_pub.publish(twist)
+    #         time.sleep(5.)
+    #         self.set_parameters([rclpy.Parameter("active", value=True)])
+    #     return control_msg
+    
     def nav_callback(self,msg:Bool)->None:
-        if msg.data:
-            current_state = self.occupancy.state2grid(np.array([self.state.x, self.state.y]))
-            current_state = np.array([current_state[0],current_state[1]])
-            frontier_states = []
-            kernel=np.ones((13, 13))
-            coverage = convolve2d(np.ones((self.occupancy.size_xy[1], self.occupancy.size_xy[0])), kernel, mode='same', boundary='fill', fillvalue=0)
-            unknown=convolve2d(self.occupancy.probs==-1, kernel, mode='same', boundary='fill', fillvalue=0)
-            known_occupied=convolve2d(self.occupancy.probs>=0.5, kernel, mode='same', boundary='fill', fillvalue=0)
-            known_unoccupied=convolve2d((self.occupancy.probs >= 0) & (self.occupancy.probs < 0.5), kernel, mode='same', boundary='fill', fillvalue=0)
-            unknown_smoothed=unknown/coverage
-            known_occupied_smoothed=known_occupied/coverage
-            known_unoccupied_smoothed=known_unoccupied/coverage
-            criteria_1 = unknown_smoothed >= 0.2
-            criteria_2 = known_occupied_smoothed == 0
-            criteria_3 = known_unoccupied_smoothed >= 0.3
-            criteria = criteria_1 & criteria_2 & criteria_3
-            frontier_states = np.argwhere(criteria)
-            if len(frontier_states)==0:
-            	return
-            state_positions = frontier_states[:, [1, 0]]
-            distances = np.linalg.norm(state_positions - current_state, axis=1)
-            min_dist_index = np.argmin(distances)
-            new_msg=TurtleBotState()
-            new_state=self.occupancy.grid2state(state_positions[min_dist_index])
-            new_msg.x=new_state[0]
-            new_msg.y=new_state[1]
-            self.get_logger().warn(f"{new_state[0]},{new_state[1]}")
-            self.goal_pub.publish(new_msg)
-        else:
+        current_state = self.occupancy.state2grid(np.array([self.state.x, self.state.y]))
+        current_state = np.array([current_state[0],current_state[1]])
+        frontier_states = []
+        kernel=np.ones((13, 13))
+        coverage = convolve2d(np.ones((self.occupancy.size_xy[1], self.occupancy.size_xy[0])), kernel, mode='same', boundary='fill', fillvalue=0)
+        unknown=convolve2d(self.occupancy.probs==-1, kernel, mode='same', boundary='fill', fillvalue=0)
+        known_occupied=convolve2d(self.occupancy.probs>=0.5, kernel, mode='same', boundary='fill', fillvalue=0)
+        known_unoccupied=convolve2d((self.occupancy.probs >= 0) & (self.occupancy.probs < 0.5), kernel, mode='same', boundary='fill', fillvalue=0)
+        unknown_smoothed=unknown/coverage
+        known_occupied_smoothed=known_occupied/coverage
+        known_unoccupied_smoothed=known_unoccupied/coverage
+        criteria_1 = unknown_smoothed >= 0.2
+        criteria_2 = known_occupied_smoothed == 0
+        criteria_3 = known_unoccupied_smoothed >= 0.3
+        criteria = criteria_1 & criteria_2 & criteria_3
+        frontier_states = np.argwhere(criteria)
+        if len(frontier_states)==0:
+            self.get_logger().warn("navigation finish!")
             return
+        state_positions = frontier_states[:, [1, 0]]
+        distances = np.linalg.norm(state_positions - current_state, axis=1)
+        min_dist_index = np.argmin(distances)
+        new_msg=TurtleBotState()
+        new_state=self.occupancy.grid2state(state_positions[min_dist_index])
+        new_msg.x=new_state[0]
+        new_msg.y=new_state[1]
+        self.get_logger().warn(f"{new_state[0]},{new_state[1]}")
+        self.goal_pub.publish(new_msg)
+        return
             
     def state_callback(self, msg: TurtleBotState) -> None:
         """ callback triggered when receiving latest turtlebot state

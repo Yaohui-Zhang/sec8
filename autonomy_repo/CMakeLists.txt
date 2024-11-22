@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 install(PROGRAMS
     scripts/exploration.py
     scripts/navigator.py
+    scripts/perception_controller.py
     DESTINATION lib/${PROJECT_NAME}
 )
 

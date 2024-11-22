@@ -58,25 +58,25 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        asl_tb3/base_scan/velodyne:
-          Value: true
-        asl_tb3/imu_link/imu:
-          Value: true
         base_footprint:
           Value: true
         base_link:
           Value: true
         base_scan:
           Value: true
-        imu_link:
+        caster_back_link:
           Value: true
-        left_wheel_link:
+        imu_link:
           Value: true
         map:
           Value: true
         odom:
           Value: true
-        right_wheel_link:
+        velodyne:
+          Value: true
+        wheel_left_link:
+          Value: true
+        wheel_right_link:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -89,15 +89,17 @@ Visualization Manager:
             base_footprint:
               base_link:
                 base_scan:
-                  asl_tb3/base_scan/velodyne:
-                    {}
+                  {}
+                caster_back_link:
+                  {}
                 imu_link:
-                  asl_tb3/imu_link/imu:
-                    {}
-                left_wheel_link:
                   {}
-                right_wheel_link:
+                wheel_left_link:
                   {}
+                wheel_right_link:
+                  {}
+              velodyne:
+                {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/Camera

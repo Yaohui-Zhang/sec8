@@ -55,6 +55,10 @@ def generate_launch_description():
                 parameters=[
                     {"use_sim_time": use_sim_time},
                 ]
-            )
+            ),
+            Node(
+                executable="perception_controller.py",
+                package="autonomy_repo",
+            ),
         ]
     )
